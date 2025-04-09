@@ -8,4 +8,4 @@ ruamel.yaml==0.18.6
 ruamel.yaml.clib==0.2.8
 zstandard==0.22.0
 jupyter==1.1.1
-
+matplotlib==3.10.1
