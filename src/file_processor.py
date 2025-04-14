@@ -92,15 +92,15 @@ class FileProcessor(object):
 if __name__ == "__main__":
 
     path_input = (
-        r"D:\A_Project\database\bus_data\temp\rosbag2_2024_03_16-14_27_51"
+        r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0414/2/images"
     )
     path_output = (
-        r"D:\A_Project\database\bus_data\temp\rosbag2_2024_03_16-14_27_51"
+        r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0414/250414_01"
     )
     initial_num = 1
-    prefix = "240316"
+    prefix = "250414_subway"
     separator = "_"
-    suffix = "03"
+    suffix = "01"
     processor = FileProcessor()
     processor.rename_file(
         path_input, path_output, initial_num, prefix, separator, suffix
