@@ -11,8 +11,8 @@ def load_images_from_dir(path):
     return images
 def main():
     # 针孔相机+棋盘标定板
-    dir_img = Path(r"/home/ubuntu/桌面/project/utils_python/notebooks/calibration_data/honour_x10")
-    pattern = ChessboardPattern(dir_img=dir_img, board_size=(9, 6), square_size=None)
+    dir_img = Path(r"/home/ubuntu/桌面/project/C50A_calibr/dataset/250417_calibr_data")
+    pattern = ChessboardPattern(dir_img=dir_img, board_size=(5, 6), square_size=None)
     camera_model = PinholeCameraModel()
     calibrator = CameraCalibrator(
         camera_model=camera_model,

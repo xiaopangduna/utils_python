@@ -91,18 +91,27 @@ class FileProcessor(object):
 
 if __name__ == "__main__":
 
-    path_input = (
-        r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0414/2/images"
-    )
-    path_output = (
-        r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0414/250414_01"
-    )
-    initial_num = 1
-    prefix = "250414_subway"
-    separator = "_"
-    suffix = "01"
-    processor = FileProcessor()
-    processor.rename_file(
-        path_input, path_output, initial_num, prefix, separator, suffix
-    )
+    # path_input = (
+    #     r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0415/images_07"
+    # )
+    # path_output = (
+    #     r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0415/250415_07"
+    # )
+    # initial_num = 1100
+    # prefix = "250415_subway"
+    # separator = "_"
+    # suffix = "00"
+    # processor = FileProcessor()
+    # processor.rename_file(
+    #     path_input, path_output, initial_num, prefix, separator, suffix
+    # )
+
+    import os
+
+    folder_path = '/home/ubuntu/桌面/project/fall_detection_2504/dataset/0415/250415_05'  # 替换为目标文件夹路径
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.jpg') and '_00_' in filename:
+            new_filename = filename.replace('_00_', '_05_')
+            os.rename(os.path.join(folder_path, filename), os.path.join(folder_path, new_filename))
+
     pass

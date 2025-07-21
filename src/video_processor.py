@@ -86,8 +86,8 @@ class VideoProcessor(object):
         )
         count = 0
         path_images = [p for p in dir_image.iterdir()]
-        # path_images.sort()
-        path_images.sort(key=fn)
+        path_images.sort()
+        # path_images.sort(key=fn)
         for path_image in path_images:
             img = cv2.imread(str(path_image))
             out.write(img)
@@ -122,10 +122,11 @@ if __name__ == "__main__":
 
     dir_images = [
         Path(
-            r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0407_exp2"
-        )
+            r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0415/250415_filter"
+        ),
+
     ]
-    dir_save = Path(r"/home/ubuntu/桌面/project/fall_detection_2504/dataset")
+    dir_save = Path(r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0415")
     img_size = (640, 480)
     fourcc = cv2.VideoWriter_fourcc(*"XVID")
     frame_rate = 5              
