@@ -3,56 +3,38 @@ import cv2
 import json
 import yaml
 import numpy as np
-from cv_bridge import CvBridge
 
-class RosbagReader:
-    def __init__(self, bag_path: str):
-        self.bag_path = bag_path
-        self.generic_saver = GenericSaver()
-        
-    def read_and_save(self, topics=None, output_dir="."):
-        """读取并保存消息"""
-        import rosbag
-        os.makedirs(output_dir, exist_ok=True)
-        
-        with rosbag.Bag(self.bag_path, 'r') as bag:
-            for topic, msg, t in bag.read_messages(topics=topics):
-                try:
-                    self.generic_saver.save(msg, topic, t, output_dir)
-                except Exception as e:
-                    print(f"处理消息失败 [{topic}]: {str(e)}")
-
-
-class GenericSaver:
+class MessageSaver:
     """通用保存器，根据数据类型自动选择保存方式"""
     
     def __init__(self):
-        self.bridge = CvBridge()
+        # self.bridge = CvBridge()
         self.type_handlers = {}
         self._register_default_handlers()
         
     def _register_default_handlers(self):
-        """注册默认的数据类型处理器"""
-        # 基本数据类型
-        self.register_handler(int)(self._save_scalar)
-        self.register_handler(float)(self._save_scalar)
-        self.register_handler(str)(self._save_string)
-        self.register_handler(bool)(self._save_scalar)
+        # """注册默认的数据类型处理器"""
+        # # 基本数据类型
+        # self.register_handler(int)(self._save_scalar)
+        # self.register_handler(float)(self._save_scalar)
+        # self.register_handler(str)(self._save_string)
+        # self.register_handler(bool)(self._save_scalar)
         
-        # ROS消息类型（基于内部数据结构）
-        self.register_handler(np.ndarray)(self._save_array)
+        # # ROS消息类型（基于内部数据结构）
+        # self.register_handler(np.ndarray)(self._save_array)
         
-        # 特殊ROS消息类型
-        try:
-            # 尝试导入ROS消息类型（如果环境中存在）
-            from sensor_msgs.msg import Image, LaserScan
-            self.register_handler(Image)(self._save_image)
-            self.register_handler(LaserScan)(self._save_laserscan)
-        except ImportError:
-            pass  # 如果无法导入ROS消息类型，则不注册相关处理器
+        # # 特殊ROS消息类型
+        # try:
+        #     # 尝试导入ROS消息类型（如果环境中存在）
+        #     from sensor_msgs.msg import Image, LaserScan
+        #     self.register_handler(Image)(self._save_image)
+        #     self.register_handler(LaserScan)(self._save_laserscan)
+        # except ImportError:
+        #     pass  # 如果无法导入ROS消息类型，则不注册相关处理器
         
-        # 通用处理（作为后备）
-        self.register_handler(object)(self._save_generic)
+        # # 通用处理（作为后备）
+        # self.register_handler(object)(self._save_generic)
+        pass
     
     def register_handler(self, data_type):
         """注册特定数据类型的处理函数（装饰器）"""
@@ -101,8 +83,9 @@ class GenericSaver:
     
     def _save_image(self, data, path):
         """保存ROS Image消息"""
-        cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        cv2.imwrite(f"{path}.jpg", cv_img)
+        # cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
+        # cv2.imwrite(f"{path}.jpg", cv_img)
+        pass
     
     def _save_laserscan(self, data, path):
         """保存LaserScan消息"""
