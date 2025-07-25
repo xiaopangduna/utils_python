@@ -42,5 +42,5 @@ class RosbagReader:
                 connections=connections
             ):
                 msg = reader.deserialize(rawdata, connection.msgtype)
-                
+
                 print(msg.header.frame_id)
