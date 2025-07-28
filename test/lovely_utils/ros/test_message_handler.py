@@ -5,9 +5,9 @@ import os
 from rosbags.typesys import Stores, get_typestore
 from rosbags.typesys.store import Typestore
 
-from util_ros.message_handler import SensorMsgsMsgImageHandler
+from lovely_utils.ros.message_handler import SensorMsgsMsgImageHandler
 
-from util import get_msg_sensor_msgs_msg_Image
+from .util import get_msg_sensor_msgs_msg_Image
 
 
 def test_SensorMsgsMsgImageHandler_is_handle():

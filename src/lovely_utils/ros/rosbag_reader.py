@@ -27,16 +27,6 @@ class RosbagReader:
         self.typestore = typestore
         self.message_saver = message_saver
 
-    # def save_msg(self, dir_save: Path | str):
-    #     # 检查topic是否在存储列表中
-    #     with AnyReader([self.bag_path], default_typestore=self.typestore) as reader:
-    #         connections = [x for x in reader.connections if x.topic in self.topics]
-    #         for connection, timestamp, rawdata in reader.messages(
-    #             connections=connections
-    #         ):
-    #             msg = reader.deserialize(rawdata, connection.msgtype)
-    #             path_file = self.message_saver.save(msg, dir_save, connection.topic)
-
     def save_msg(self, dir_save: Union[str, Path]):
         """
         保存消息到指定目录，按照 bag 名和 topic 分类存储。
