@@ -46,6 +46,7 @@ def get_msg_sensor_msgs_msg_Image(
     Image = typestore.types["sensor_msgs/msg/Image"]
 
     header = Header(
+        seq=0,
         stamp=Time(sec=timestamp[0], nanosec=timestamp[1]),
         frame_id=frame_id,
     )
