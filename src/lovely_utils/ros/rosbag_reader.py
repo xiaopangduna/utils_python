@@ -31,31 +31,26 @@ class RosbagReader:
         """
         保存消息到指定目录，按照 bag 名和 topic 分类存储。
         """
-        # 获取 bag 的名称（ROS1 是文件名，ROS2 是文件夹名）
         bag_name = self._get_bag_name()
-
-        # 目标保存路径：<dir_save>/<bag_name>/<topic_name>
         save_dir = Path(dir_save) / bag_name
 
         with AnyReader([self.bag_path], default_typestore=self.typestore) as reader:
             # 获取符合 topic 的消息连接
             connections = [x for x in reader.connections if x.topic in self.topics]
-
             for connection, timestamp, rawdata in reader.messages(
                 connections=connections
             ):
                 msg = reader.deserialize(rawdata, connection.msgtype)
-                # 为每个话题创建保存路径并保存消息
-                # topic_save_dir = save_dir / connection.topic
-                path_file = self.message_saver.save(
-                    msg, str(save_dir), connection.topic
-                )
+                handler = self.message_saver.get_handler(msg)
+                path_file = handler.save(msg, str(save_dir), connection.topic)
+        return 
 
     def get_info(self):
 
         pass
 
     def print_info(self):
+
         pass
 
     def _get_bag_name(self) -> str:

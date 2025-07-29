@@ -1,28 +1,30 @@
-import sys
-import pytest
-
 from rosbags.typesys import Stores, get_typestore
-from rosbags.typesys.store import Typestore
 
 from lovely_utils.ros.rosbag_reader import RosbagReader
 from lovely_utils.ros.message_saver import MessageSaver
 
+from .util import *
 
 
-# TODO 显示bag的信息
 def test_print_info():
     # 测试能否正常获取数据
     pass
 
 
-def test_save_msg_sensor_msgs_msg_Image():
+def test_save_msg_sensor_msgs_msg_Image(setup_typestore):
     # 测试能否正常获取数据
-    bag_path = "/home/ubuntu/Desktop/project/2505_c50b_calibrator/datasets/250507_zhongshi_c50a_calibr/2025-05-07-16-57-04.bag"
-    topics = ["/ascamera_hp60c/rgb0/image"]
-    typestore = get_typestore(Stores.ROS1_NOETIC)
-    message_saver = MessageSaver()
-    reader = RosbagReader(bag_path, topics, typestore, message_saver)
-    reader.save_msg("/home/ubuntu/Desktop/project/utils_python/tmp")
+    typestore = setup_typestore
+    bag_path = "/home/ubuntu/Desktop/project/utils_python/tmp/test.bag"
+    get_ros1_bag_file(
+        bag_filename=bag_path,
+        topics=["/camera/color/image_raw", "/imu/data"],
+        msg_types=["sensor_msgs/msg/Image", "sensor_msgs/msg/Imu"],
+        typestore=typestore,
+    )
+    pass
+    # message_saver = MessageSaver()
+    # reader = RosbagReader(bag_path, topics, typestore, message_saver)
+    # reader.save_msg("/home/ubuntu/Desktop/project/utils_python/tmp")
 
 
 def test_save_msg_sensor_msgs_msg_CameraInfo():
