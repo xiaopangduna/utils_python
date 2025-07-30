@@ -48,6 +48,7 @@ jupyterlab_pygments==0.3.0
 jupyterlab_server==2.27.3
 jupyterlab_widgets==3.0.15
 lark==1.2.2
+-e git+https://github.com/xiaopangduna/utils_python.git@4f6c407e73742b5506f10edb2d73f30ca72a3715#egg=lovely_utils
 lz4==4.4.4
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
@@ -68,6 +69,7 @@ packaging==25.0
 pandocfilters==1.5.1
 parso==0.8.4
 pexpect==4.9.0
+pillow==11.3.0
 platformdirs==4.3.8
 pluggy==1.6.0
 prometheus_client==0.22.1
