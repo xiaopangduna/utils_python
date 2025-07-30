@@ -1,0 +1,7 @@
+# 提取bag包
+lovely_utils rosbag save \
+--bag-paths /home/ubuntu/Desktop/project/2505_c50b_calibrator/datasets/2025-07-28-office-808-test_RGB_D/2025-07-28-14-35-20.bag \
+--bag-paths /home/ubuntu/Desktop/project/2505_c50b_calibrator/datasets/2025-07-28-office-808-test_RGB_D/2025-07-28-14-35-20.bag \
+--topics /nuwa_1/rgb0/image \
+--topics /nuwa_1/rgb0/camera_info \
+--save-dir ./tmp

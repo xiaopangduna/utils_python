@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union
+from typing import Union, Literal, Optional
 from rosbags.highlevel import AnyReader
 from rosbags.typesys import Stores, get_typestore
 from rosbags.typesys.store import Typestore
@@ -27,12 +27,15 @@ class RosbagReader:
         self.typestore = typestore
         self.message_saver = message_saver
 
-    def save_msg(self, dir_save: Union[str, Path]):
+    def save_msg(self, dir_save: Optional[Path] = None):
         """
         保存消息到指定目录，按照 bag 名和 topic 分类存储。
         """
         bag_name = self._get_bag_name()
-        save_dir = Path(dir_save) / bag_name
+        if dir_save is None:
+            save_dir = self.bag_path.parent / bag_name
+        else:
+            save_dir = Path(dir_save) / bag_name
 
         with AnyReader([self.bag_path], default_typestore=self.typestore) as reader:
             # 获取符合 topic 的消息连接
@@ -42,8 +45,8 @@ class RosbagReader:
             ):
                 msg = reader.deserialize(rawdata, connection.msgtype)
                 handler = self.message_saver.get_handler(msg)
-                path_file = handler.save(msg, str(save_dir), connection.topic)
-        return 
+                handler.save(msg, str(save_dir), connection.topic)
+        return
 
     def get_info(self):
 
@@ -53,6 +56,7 @@ class RosbagReader:
 
         pass
 
+
     def _get_bag_name(self) -> str:
         """
         根据 rosbag 类型返回 bag 名
@@ -60,8 +64,8 @@ class RosbagReader:
         - 对于 ROS2，返回文件夹名
         """
         if self.bag_path.suffix == ".bag":  # ROS1
-            return self.bag_path.stem  # 获取文件名，不含扩展名
+            return "msg_"+self.bag_path.stem  # 获取文件名，不含扩展名
         elif self.bag_path.is_dir():  # ROS2
-            return self.bag_path.name  # 获取文件夹名
+            return "msg_"+self.bag_path.name  # 获取文件夹名
         else:
             raise ValueError("Invalid rosbag path")

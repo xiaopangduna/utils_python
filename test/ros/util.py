@@ -3,11 +3,12 @@ import pytest
 from typing import Tuple
 
 import numpy as np
+from PIL import Image
 from rosbags.typesys import Stores, get_typestore
 from rosbags.rosbag1 import Writer as ROS1BagWriter
 from rosbags.serde import serialize_cdr
 
-from typing import List
+from typing import List, Union
 
 
 ROS_VERSION_MAPPING = {
@@ -76,17 +77,9 @@ def get_msg_sensor_msgs_msg_Image(
     # 计算每行字节数
     step = width * pixel_bytes
 
-    # 生成模拟图像数据
-    if encoding == "rgb8":
-        x_grid = np.tile(np.linspace(0, 255, width, dtype=np.uint8), (height, 1))
-        data_np = np.zeros((height, width, 3), dtype=np.uint8)
-        data_np[:, :, 0] = x_grid  # R通道
-    elif encoding == "mono8":
-        x_grid = np.tile(np.linspace(0, 255, width, dtype=np.uint8), (height, 1))
-        data_np = x_grid.astype(np.uint8)
-    else:
-        data_np = np.zeros((height, width, pixel_bytes), dtype=np.uint8)
-
+    data_np = generate_image_data(
+        height=height, width=width, encoding=encoding, pixel_bytes=pixel_bytes
+    )
     # 创建消息头
     header = get_msg_sensor_msgs_msg_Header(typestore, timestamp, frame_id)
     image_data = data_np.tobytes()
@@ -103,6 +96,40 @@ def get_msg_sensor_msgs_msg_Image(
     )
 
     return image_msg
+
+
+def generate_image_data(
+    height: int = 240,
+    width: int = 320,
+    encoding: str = "rgb8",
+    pixel_bytes: int = 3,
+) -> np.ndarray:
+    """
+    生成模拟图像的numpy数组数据
+
+    参数:
+        height: 图像高度
+        width: 图像宽度
+        encoding: 图像编码（如"rgb8", "mono8"）
+        pixel_bytes: 每个像素的字节数（由编码决定）
+
+    返回:
+        图像数据的numpy数组（多维，dtype=np.uint8）
+    """
+    if encoding == "rgb8":
+        # 生成R通道渐变（0→255），G、B通道为0
+        x_grid = np.tile(np.linspace(0, 255, width, dtype=np.uint8), (height, 1))
+        data_np = np.zeros((height, width, 3), dtype=np.uint8)
+        data_np[:, :, 0] = x_grid  # R通道
+    elif encoding == "mono8":
+        # 生成灰度渐变（0→255）
+        x_grid = np.tile(np.linspace(0, 255, width, dtype=np.uint8), (height, 1))
+        data_np = x_grid.astype(np.uint8)
+    else:
+        # 其他编码（如bgr8、rgba8、mono16）生成全零数组
+        data_np = np.zeros((height, width, pixel_bytes), dtype=np.uint8)
+
+    return data_np
 
 
 def get_msg_sensor_msgs_msg_Imu(
@@ -151,6 +178,7 @@ def get_msg_sensor_msgs_msg_Imu(
 
     return imu_msg
 
+
 def get_ros1_bag_file(
     bag_filename: str,
     topics: List[str],
@@ -159,7 +187,7 @@ def get_ros1_bag_file(
     duration: float = 10.0,  # 持续时间（秒）
     frequency: float = 10.0,  # 发布频率（Hz）
     image_params: dict = None,  # 图像消息自定义参数
-    imu_params: dict = None,   # IMU消息自定义参数
+    imu_params: dict = None,  # IMU消息自定义参数
 ) -> None:
     """
     生成包含 sensor_msgs/msg/Image 和 sensor_msgs/msg/Imu 的 ROS1 bag 文件
@@ -172,7 +200,7 @@ def get_ros1_bag_file(
     # 1. 输入验证
     if len(topics) != len(msg_types):
         raise ValueError("topics与msg_types长度必须一致")
-    
+
     supported_types = {"sensor_msgs/msg/Image", "sensor_msgs/msg/Imu"}
     for msg_type in msg_types:
         if msg_type not in supported_types:
@@ -202,7 +230,7 @@ def get_ros1_bag_file(
         connections = {}
         for topic, msg_type in zip(topics, msg_types):
             # 为每个话题创建连接（ROS1 bag需要指定消息类型）
-            conn = writer.add_connection(topic, msg_type)
+            conn = writer.add_connection(topic, msg_type, typestore=typestore)
             connections[topic] = (conn, msg_type)
 
         # 4.2 循环生成并写入消息
@@ -220,7 +248,9 @@ def get_ros1_bag_file(
                             height=image_params.get("height", 240),
                             width=image_params.get("width", 320),
                             encoding=image_params.get("encoding", "rgb8"),
-                            frame_id=image_params.get("frame_id", f"camera_{topic.split('/')[-1]}"),
+                            frame_id=image_params.get(
+                                "frame_id", f"camera_{topic.split('/')[-1]}"
+                            ),
                             timestamp=timestamp,
                         )
                         msg.header.seq = seq  # 更新序列号
@@ -231,20 +261,67 @@ def get_ros1_bag_file(
                         msg = get_msg_sensor_msgs_msg_Imu(
                             typestore=typestore,
                             timestamp=timestamp,
-                            frame_id=imu_params.get("frame_id", f"imu_{topic.split('/')[-1]}"),
-                            orientation=imu_params.get("orientation", (1.0, 0.0, 0.0, 0.0)),
-                            angular_velocity=imu_params.get("angular_velocity", (0.0, 0.0, 0.0)),
-                            linear_acceleration=imu_params.get("linear_acceleration", (0.0, 0.0, 9.81)),
+                            frame_id=imu_params.get(
+                                "frame_id", f"imu_{topic.split('/')[-1]}"
+                            ),
+                            orientation=imu_params.get(
+                                "orientation", (1.0, 0.0, 0.0, 0.0)
+                            ),
+                            angular_velocity=imu_params.get(
+                                "angular_velocity", (0.0, 0.0, 0.0)
+                            ),
+                            linear_acceleration=imu_params.get(
+                                "linear_acceleration", (0.0, 0.0, 9.81)
+                            ),
                         )
                         msg.header.seq = seq  # 更新序列号
-                        
+
                     # 序列化消息并写入（关键修复：依赖Image消息的data为numpy数组）
-                    writer.write(conn, timestamp_ns, typestore.serialize_ros1(msg, msg_type),)
+                    writer.write(
+                        conn,
+                        timestamp_ns,
+                        typestore.serialize_ros1(msg, msg_type),
+                    )
 
                 except Exception as e:
                     raise RuntimeError(f"处理话题{topic}的第{seq}条消息失败: {str(e)}")
 
-    print(f"成功生成ROS1 bag文件: {bag_filename}")
-    print(f"  消息总数: {num_messages * len(topics)} | 持续时间: {duration}秒 | 频率: {frequency}Hz")
-    print(f"  包含话题: {dict(zip(topics, msg_types))}")
-    
+
+
+def is_image_equal(
+    image1: Union[str, np.ndarray],
+    image2: Union[str, np.ndarray],
+    pixel_tolerance: int = 20,
+) -> bool:
+    """
+    比较两张图像是否相同，支持像素级容差
+
+    参数:
+        image1, image2: 图像路径或numpy数组
+        pixel_tolerance: 像素值差异容忍度（默认为0，即严格相等）
+
+    返回:
+        bool: 两张图像是否在给定容差范围内相同
+    """
+    # 确保图像数据可用
+    if isinstance(image1, str):
+        image1 = Image.open(image1)
+        image1 = np.array(image1.convert("RGB"), dtype=np.uint8)
+    if isinstance(image2, str):
+        image2 = Image.open(image2)
+        image2 = np.array(image2.convert("RGB"), dtype=np.uint8)
+
+    # 检查形状是否一致
+    if image1.shape != image2.shape:
+        return False
+
+    # 计算像素差异（带容差）
+    if pixel_tolerance > 0:
+        # 计算每个像素的最大通道差异
+        diff = np.abs(image1.astype(np.int16) - image2.astype(np.int16))
+        pixel_max_diff = np.max(diff, axis=2)  # 沿通道轴取最大值
+        # 检查是否有像素差异超过容差
+        return np.all(pixel_max_diff <= pixel_tolerance)
+    else:
+        # 严格相等比较（原始逻辑）
+        return np.array_equal(image1, image2)
