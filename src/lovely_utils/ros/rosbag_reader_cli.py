@@ -2,8 +2,10 @@ from typing import List, Optional
 from pathlib import Path
 
 import typer
+from rosbags.typesys import get_typestore
+
 from .rosbag_reader import RosbagReader
-from rich.progress import track
+from .type import ROS_VERSION_MAPPING
 
 app = typer.Typer(name="rosbag")
 
@@ -56,9 +58,41 @@ def save(
 
 @app.command()
 def info(
-    bag_path: str = typer.Option(..., help="Path to the rosbag"),
-    topics: List[str] = typer.Option(..., help="Topics to inspect"),
+    bag_paths: List[Path] = typer.Option(
+        ..., 
+        exists=True, 
+        file_okay=True, 
+        dir_okay=True, 
+        readable=True,
+        help="Paths to one or more rosbag files or directories",
+        show_default=True,
+    ),
+    typestore: str = typer.Option(
+        "ros1_noetic",
+        help="Type store to use for message types",
+        show_default=True,
+        case_sensitive=False,
+        autocompletion=lambda: list(ROS_VERSION_MAPPING.keys()),
+    ),
 ):
-    """Print info about selected topics (TBD)"""
-    reader = RosbagReader(bag_path, topics)
-    reader.print_info()
+    """Print info about selected topics in one or more rosbags."""
+    if typestore not in ROS_VERSION_MAPPING:
+        typer.echo(f"Invalid typestore '{typestore}'. Supported: {', '.join(ROS_VERSION_MAPPING.keys())}")
+        raise typer.Exit(code=1)
+
+    ts = get_typestore(ROS_VERSION_MAPPING[typestore])
+
+    for bag_path in bag_paths:
+        typer.echo(f"\n--- Rosbag: {bag_path} ---")
+        try:
+            info = RosbagReader.get_info(bag_path, ts)
+        except Exception as e:
+            typer.echo(f"Failed to read rosbag info for {bag_path}: {e}")
+            continue  # 继续处理下一个 rosbag
+
+        # 如果你有 format_info 函数可以格式化，这里调用
+        # formatted_info = format_info(info)
+        # typer.echo(formatted_info)
+
+        # 目前先直接打印字典，后续可以换成美化输出
+        typer.echo(info)

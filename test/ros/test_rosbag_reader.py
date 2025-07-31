@@ -3,7 +3,7 @@ from lovely_utils.ros.message_saver import MessageSaver
 
 from .util import *
 
-def test_get_info(setup_typestore, setup_temp_dir):
+def test_get_info_dict(setup_typestore, setup_temp_dir):
     # 测试能否正常获取数据
     typestore = setup_typestore
     tmp_dir = setup_temp_dir
@@ -19,7 +19,7 @@ def test_get_info(setup_typestore, setup_temp_dir):
     )
     
     # Test the get_info function
-    info = RosbagReader.get_info(bag_path, typestore)
+    info = RosbagReader._get_info_dict(bag_path, typestore)
     
     # Verify the returned info structure
     assert isinstance(info, dict), "get_info should return a dictionary"

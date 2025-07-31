@@ -45,6 +45,7 @@ python setup.py install
 ```bash
 lovely_utils rosbag save \
   --bag-paths /path/to/your.bag \
+  --bag-paths /path/to/your.bag \
   --topics /camera/image_raw \
   --topics /camera/camera_info \
   --save-dir ./output
@@ -54,70 +55,16 @@ lovely_utils rosbag save \
 
 ```bash
 lovely_utils rosbag info \
-  --bag-path /path/to/your.bag \
-  --topics /camera/image_raw
+  --bag-paths /path/to/your.bag \
+  --bag-paths /path/to/your.bag \
+  --typestore ros1_noetic
 ```
 
 ---
 
-### Python 脚本调用示例
+### Python 脚本调用
 
-#### 提取 ROS Bag 消息
-
-```python
-from lovely_utils.ros.rosbag_reader import RosbagReader
-from lovely_utils.ros.message_saver import MessageSaver
-
-bag_path = "/path/to/your.bag"
-topics = ["/camera/image_raw", "/camera/camera_info"]
-save_dir = "./output"
-
-message_saver = MessageSaver()
-reader = RosbagReader(bag_path, topics, message_saver=message_saver)
-reader.save_msg(save_dir)
-```
-
-#### 视频处理
-
-```python
-from lovely_utils.video_processor import VideoProcessor
-from pathlib import Path
-import cv2
-
-# 视频帧提取
-video_processor = VideoProcessor()
-video_processor.extract_frame_from_video(
-    path_video="input.avi",
-    path_save="frames_output/"
-)
-
-# 图像合并为视频
-processor = VideoProcessor()
-processor.merge_image_to_video(
-    dir_image=Path("frames_output/"),
-    path_video=Path("output.avi"),
-    img_size=(640, 480),
-    fourcc=cv2.VideoWriter_fourcc(*"XVID"),
-    frame_rate=5,
-    fn=lambda x: int(x.stem.split("_")[-1])
-)
-```
-
-#### 文件批量重命名
-
-```python
-from lovely_utils.file_processor import FileProcessor
-
-processor = FileProcessor()
-processor.rename_file(
-    path_input="/input_dir",
-    path_output="/output_dir",
-    initial_num=1100,
-    prefix="dataset",
-    separator="_",
-    suffix="00"
-)
-```
+#### 提取 ROS Bag 消息--script/rosbag.py
 
 ---
 
@@ -160,7 +107,7 @@ utils_python/
 使用 `pytest` 进行单元测试：
 
 ```bash
-pytest
+pytest test/
 ```
 
 ---

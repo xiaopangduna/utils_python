@@ -40,50 +40,21 @@ class RosbagReader:
         with AnyReader([self.bag_path], default_typestore=self.typestore) as reader:
             # 获取符合 topic 的消息连接
             connections = [x for x in reader.connections if x.topic in self.topics]
-            for connection, timestamp, rawdata in reader.messages(connections=connections):
+            for connection, timestamp, rawdata in reader.messages(
+                connections=connections
+            ):
                 msg = reader.deserialize(rawdata, connection.msgtype)
                 handler = self.message_saver.get_handler(msg)
                 handler.save(msg, str(save_dir), connection.topic)
         return
 
     @staticmethod
-    def get_info(path_bag: Path, typestore: Typestore = get_typestore(Stores.ROS1_NOETIC)) -> dict:
-        """
-        获取 rosbag 信息
-        :param path_bag: rosbag 文件路径
-        :param typestore: Typestore for deserializing messages
-        :return: dict
-        """
-        info = {}
-
-        with AnyReader([path_bag], default_typestore=typestore) as reader:
-            # Basic bag information
-            info["path"] = str(path_bag)
-            info["start_time"] = reader.start_time
-            info["end_time"] = reader.end_time
-            info["duration"] = reader.end_time - reader.start_time if reader.start_time and reader.end_time else None
-
-            # Topic information
-            topics_info = {}
-            for connection in reader.connections:
-                topic = connection.topic
-                if topic not in topics_info:
-                    topics_info[topic] = {"type": connection.msgtype, "count": 0, "connections": 0}
-                topics_info[topic]["count"] += 1
-                topics_info[topic]["connections"] = len([c for c in reader.connections if c.topic == topic])
-
-            # Count messages per topic
-            for topic in topics_info:
-                topic_connections = [c for c in reader.connections if c.topic == topic]
-                message_count = sum(1 for _ in reader.messages(connections=topic_connections))
-                topics_info[topic]["message_count"] = message_count
-
-            info["topics"] = topics_info
-            info["total_messages"] = sum(topic_info["message_count"] for topic_info in topics_info.values())
-            info["total_topics"] = len(topics_info)
-
-        return info
-
+    def get_info(
+        path_bag: Path, typestore: Typestore = get_typestore(Stores.ROS1_NOETIC)
+    ):
+        info = RosbagReader._get_info_dict(path_bag, typestore=typestore)
+        info_str = RosbagReader._format_info(info)
+        return info_str
 
     def _get_bag_name(self) -> str:
         """
@@ -97,3 +68,81 @@ class RosbagReader:
             return "msg_" + self.bag_path.name  # 获取文件夹名
         else:
             raise ValueError("Invalid rosbag path")
+
+    @staticmethod
+    def _get_info_dict(
+        path_bag: Path, typestore: Typestore = get_typestore(Stores.ROS1_NOETIC)
+    ) -> dict:
+        """
+        获取 rosbag 信息
+        :param path_bag: rosbag 文件路径
+        :param typestore: Typestore for deserializing messages
+        :return: dict
+        """
+        info = {}
+
+        with AnyReader([path_bag], default_typestore=typestore) as reader:
+            # Basic bag information
+            info["path"] = str(path_bag)
+            info["start_time"] = reader.start_time
+            info["end_time"] = reader.end_time
+            info["duration"] = (
+                reader.end_time - reader.start_time
+                if reader.start_time and reader.end_time
+                else None
+            )
+
+            # Topic information
+            topics_info = {}
+            for connection in reader.connections:
+                topic = connection.topic
+                if topic not in topics_info:
+                    topics_info[topic] = {
+                        "type": connection.msgtype,
+                        "count": 0,
+                        "connections": 0,
+                    }
+                topics_info[topic]["count"] += 1
+                topics_info[topic]["connections"] = len(
+                    [c for c in reader.connections if c.topic == topic]
+                )
+
+            # Count messages per topic
+            for topic in topics_info:
+                topic_connections = [c for c in reader.connections if c.topic == topic]
+                message_count = sum(
+                    1 for _ in reader.messages(connections=topic_connections)
+                )
+                topics_info[topic]["message_count"] = message_count
+
+            info["topics"] = topics_info
+            info["total_messages"] = sum(
+                topic_info["message_count"] for topic_info in topics_info.values()
+            )
+            info["total_topics"] = len(topics_info)
+
+        return info
+
+    @staticmethod
+    def _format_info(info: dict, align: int = 30) -> str:
+        """
+        将 bag info 格式化为可读字符串。
+        每个 topic 占据一行，便于快速浏览。
+        """
+        lines = []
+        lines.append(f"Bag Path: {info['path']}")
+        lines.append(f"Start Time: {info['start_time']}")
+        lines.append(f"End Time: {info['end_time']}")
+        lines.append(f"Duration: {info['duration']:.2f} s")
+        lines.append(f"Total Topics: {info['total_topics']}")
+        lines.append(f"Total Messages: {info['total_messages']}")
+        lines.append("Topics:")
+
+        for topic, topic_info in info["topics"].items():
+            topic_str = topic.ljust(align)
+            type_str = f"[{topic_info['type']}]".ljust(35)
+            msg_str = f"Messages: {topic_info['message_count']}".ljust(20)
+            conn_str = f"Connections: {topic_info['connections']}"
+            lines.append(f"  {topic_str} {type_str} {msg_str} {conn_str}")
+
+        return "\n".join(lines)
