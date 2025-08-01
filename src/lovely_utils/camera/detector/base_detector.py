@@ -1,4 +1,4 @@
 class BaseDetector:
 
     def detcet(self):
-        raise NotImplementedError()
+        raise NotImplementedError("detect is not implemented")

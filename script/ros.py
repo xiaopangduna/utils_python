@@ -18,7 +18,7 @@ def extract_msg_from_rosbag():
 
 
 def get_rosbag_info():
-    path_bag = "/home/ubuntu/Desktop/project/2505_c50b_calibrator/datasets/2025-07-28-office-808-test_RGB_D/2025-07-28-14-35-20.bag"
+    path_bag = "/home/ubuntu/Desktop/tmp/hk_2025-08-01/rosbag2_2025_07_31-12_02_42"
     path_bag = Path(path_bag)
     ros_version = Stores.ROS1_NOETIC if "bag" in path_bag.suffix else Stores.ROS2_HUMBLE
     typestore = get_typestore(ros_version)
@@ -28,5 +28,5 @@ def get_rosbag_info():
 
 if __name__ == "__main__":
     get_rosbag_info()
-    extract_msg_from_rosbag()
+    # extract_msg_from_rosbag()
 
