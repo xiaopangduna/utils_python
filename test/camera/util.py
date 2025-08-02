@@ -4,9 +4,7 @@ import cv2
 
 
 @pytest.fixture
-def generate_chessboards_image(
-    img_size=(640, 480), inner_corners=(6, 9), square_size=40
-):
+def generate_chessboards_image(img_size=(640, 480), inner_corners=(6, 9), square_size=40):
     """
     生成符合OpenCV角点检测要求的棋盘格图像
     特点：黑白交替方格，无额外边框，边缘留白，内角点清晰可辨
@@ -55,16 +53,18 @@ def generate_chessboards_image(
                 cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 0), -1)
 
     return img
+
+
 @pytest.fixture
 def generate_white_image(width=640, height=480, channels=3):
     """
     生成一张全白图像
-    
+
     参数:
         width: 图像宽度（像素）
         height: 图像高度（像素）
         channels: 通道数，3为彩色（BGR），1为灰度图
-    
+
     返回:
         全白图像的NumPy数组（uint8类型）
     """
@@ -75,5 +75,46 @@ def generate_white_image(width=640, height=480, channels=3):
     else:
         # 彩色图（BGR三通道）
         white_img = np.full((height, width, 3), 255, dtype=np.uint8)
-    
+
     return white_img
+
+
+@pytest.fixture
+def generate_pinhole_calibrator_intrinsic_params():
+    pinhole_calibrator_intrinsic_params = {
+        "K": np.array([[534.15663136, 0.0, 341.71479628], [0.0, 534.25492559, 232.05013999], [0.0, 0.0, 1.0]]),
+        "D": np.array([[-2.94269293e-01, 1.23247845e-01, 1.13850492e-03, -1.38021876e-04, 1.02084844e-02]]),
+        "dir_calib_images": "sample_data/camera/pinhole_calibrator",
+        "dir_save_detect_result": "tmp/pinhole",
+    }
+    return pinhole_calibrator_intrinsic_params
+
+
+@pytest.fixture
+def generate_pinhole_calibrator_extrinsic_params():
+    pinhole_calibrator_extrinsic_params = {
+        "K": np.array([[571.0, 0.0, 329.86688232], [0.0, 571.0, 239.08282471], [0.0, 0.0, 1.0]]),
+        "D": np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        "rvec_cw": np.array([[1.49020644], [-1.44384833], [1.00700235]]),
+        "tvec_cw": np.array([[-0.00566246], [1.01658313], [-0.17384156]]),
+        "image_size": (640, 480),
+        "img_points": np.array(
+            [
+                [270.0, 290.0],
+                [507.0, 295.0],
+                [607.0, 465.0],
+                [224.0, 456.0],
+            ],
+            dtype=np.float32,
+        ),
+        "obj_points": np.array(
+            [
+                [2.50, 0.288, -0.07],
+                [2.50, -0.612, -0.07],
+                [1.60, -0.612, -0.07],
+                [1.60, 0.288, -0.07],
+            ],
+            dtype=np.float32,
+        ),
+    }
+    return pinhole_calibrator_extrinsic_params

@@ -1,5 +1,6 @@
 notebooks/calibration_data/honour_x10
 tmp/
+*.bin
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

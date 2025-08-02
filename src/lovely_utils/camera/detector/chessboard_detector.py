@@ -2,12 +2,15 @@ import cv2
 import numpy as np
 from .base_detector import BaseDetector
 
+
 class ChessboardDetector(BaseDetector):
     def __init__(self, 
                  chessboard_size=(7, 6), 
+                 square_size=1.0,  # 新增：方格实际尺寸（单位：米/毫米等，根据需求设定）
                  criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001),
                  subpix_window_size=(11, 11),
                  subpix_zero_zone=(-1, -1),
+                 color_conversion=cv2.COLOR_BGR2GRAY,
                  text_position=(10, 30),
                  text_font=cv2.FONT_HERSHEY_SIMPLEX,
                  text_scale=1,
@@ -17,21 +20,17 @@ class ChessboardDetector(BaseDetector):
         """
         棋盘格检测器构造函数
         :param chessboard_size: 棋盘格内角点数量 (行, 列)
+        :param square_size: 棋盘格单个方格的物理尺寸（如毫米）
         :param criteria: 亚像素角点检测的终止条件
-        :param subpix_window_size: 亚像素检测的搜索窗口大小
-        :param subpix_zero_zone: 亚像素检测的死区大小
-        :param text_position: 绘制文本的位置 (x, y)
-        :param text_font: 文本字体
-        :param text_scale: 文本缩放比例
-        :param text_color: 文本颜色 (B, G, R)
-        :param text_thickness: 文本线宽
-        :param text_line_type: 文本线条类型
+        ...（其他参数说明不变）
         """
         BaseDetector.__init__(self)
         self.chessboard_size = chessboard_size
+        self.square_size = square_size  # 保存方格尺寸
         self.criteria = criteria
         self.subpix_window_size = subpix_window_size
         self.subpix_zero_zone = subpix_zero_zone
+        self.color_conversion = color_conversion
         self.text_position = text_position
         self.text_font = text_font
         self.text_scale = text_scale
@@ -49,7 +48,7 @@ class ChessboardDetector(BaseDetector):
             drawn_image: 绘制了检测结果的图像，None表示未检测到
         """
         # 转换为灰度图
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(image, self.color_conversion)
         
         # 查找棋盘格角点
         ret, corners = cv2.findChessboardCorners(gray, self.chessboard_size, None)
@@ -76,10 +75,12 @@ class ChessboardDetector(BaseDetector):
             return None, None, None
     
     def _generate_object_points(self):
-        """生成棋盘格角点对应的三维真值坐标"""
-        # 假设每个棋盘格方块的大小为1x1单位
+        """生成棋盘格对应的三维坐标点（考虑z=0平面，使用实际方格尺寸）"""
+        import numpy as np
+        # 生成网格坐标并乘以方格尺寸，得到实际物理坐标
         objp = np.zeros((self.chessboard_size[0] * self.chessboard_size[1], 3), np.float32)
-        objp[:, :2] = np.mgrid[0:self.chessboard_size[0], 0:self.chessboard_size[1]].T.reshape(-1, 2)
+        objp[:, :2] = np.mgrid[0:self.chessboard_size[0], 
+                              0:self.chessboard_size[1]].T.reshape(-1, 2) * self.square_size
         return objp
     
     def _draw_chessboard_corners_on_image(self, image, corners):
