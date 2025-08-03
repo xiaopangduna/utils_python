@@ -118,3 +118,14 @@ def generate_pinhole_calibrator_extrinsic_params():
         ),
     }
     return pinhole_calibrator_extrinsic_params
+
+
+@pytest.fixture
+def generate_fisheye_calibrator_intrinsic_params():
+    fisheye_calibrator_intrinsic_params = {
+        "K": np.array([[534.15663136, 0.0, 341.71479628], [0.0, 534.25492559, 232.05013999], [0.0, 0.0, 1.0]]),
+        "D": np.array([[-2.94269293e-01, 1.23247845e-01, 1.13850492e-03, -1.38021876e-04, 1.02084844e-02]]),
+        "dir_calib_images": "sample_data/camera/fisheye_calibrator",
+        "dir_save_detect_result": "tmp/fisheye",
+    }
+    return fisheye_calibrator_intrinsic_params
