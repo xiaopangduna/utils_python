@@ -121,18 +121,22 @@ if __name__ == "__main__":
     # # extract_frame_from_video
 
     dir_images = [
+        # Path(
+        #     r"/home/ubuntu/Desktop/project/2508_elevator_detection/src/YoloV8-face_recognition_track/indoor_output"
+        # ),
         Path(
-            r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0415/250415_filter"
+            r"/home/ubuntu/Desktop/project/2504_fall_detection/result/2025-09-28/2025-09-28-luohubei_image-result"
         ),
 
     ]
-    dir_save = Path(r"/home/ubuntu/桌面/project/fall_detection_2504/dataset/0415")
+    dir_save = Path(r"/home/ubuntu/Desktop/project/2504_fall_detection/result/2025-09-28/")
     img_size = (640, 480)
-    fourcc = cv2.VideoWriter_fourcc(*"XVID")
-    frame_rate = 5              
+    # fourcc = cv2.VideoWriter_fourcc(*"XVID")
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v") 
+    frame_rate = 50              
     processor = VideoProcessor()
     for dir_image in dir_images:
-        path_video = dir_save.joinpath(dir_image.name + ".avi")
+        path_video = dir_save.joinpath(dir_image.name + ".mp4")
         processor.merge_image_to_video(
             dir_image, path_video, img_size, fourcc, frame_rate,fn=lambda x: int(x.stem.split("_")[-1])
         )

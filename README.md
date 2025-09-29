@@ -40,25 +40,29 @@ python setup.py install
 
 安装后可直接通过 `lovely_utils` 命令使用。
 
-#### 提取 ROS Bag 消息
-
-```bash
-lovely_utils rosbag save \
-  --bag-paths /path/to/your.bag \
-  --bag-paths /path/to/your.bag \
-  --topics /camera/image_raw \
-  --topics /camera/camera_info \
-  --save-dir ./output
-```
-
 #### 查看 ROS Bag 信息
 
 ```bash
 lovely_utils rosbag info \
   --bag-paths /path/to/your.bag \
   --bag-paths /path/to/your.bag \
+  --bag-folders /path/to/your_bag_folder \
   --typestore ros1_noetic
 ```
+
+#### 提取 ROS Bag 消息
+
+```bash
+lovely_utils rosbag save \
+  --bag-paths /path/to/your.bag \
+  --bag-paths /path/to/your.bag \
+  --bag-folders /path/to/your_bag_folder \
+  --topics /camera/image_raw \
+  --topics /camera/camera_info \
+  --save-dir ./output
+```
+
+
 
 ---
 
