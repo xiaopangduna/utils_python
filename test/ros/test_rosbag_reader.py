@@ -73,7 +73,14 @@ def test_save_msg_sensor_msgs_msg_Image(setup_typestore, setup_temp_dir):
     assert path_img.exists()
     assert os.path.isfile(str(path_img))
 
-
+# def test_save_msg_sensor_msgs_msg_PointClouds2(setup_typestore, setup_temp_dir):
+#     typestore = setup_typestore
+#     bag_path = r"/home/ubuntu/Desktop/project/2601_3DLidar_object_detect/datasets/26-01-15-gaoxinhuayuan-lidar/current1_0.bag"
+#     topics = [r"/rslidar_points"]
+#     message_saver = MessageSaver()
+#     reader = RosbagReader(bag_path, topics, typestore, message_saver)
+#     reader.save_msg("/home/ubuntu/Desktop/project/utils_python/tmp")
+#     pass
 
 # def test_save_msg_sensor_msgs_msg_CameraInfo():
 #     bag_path = "/home/ubuntu/Desktop/project/2505_c50b_calibrator/datasets/2025-07-24-office-808/2025-07-24-11-16-53.bag"

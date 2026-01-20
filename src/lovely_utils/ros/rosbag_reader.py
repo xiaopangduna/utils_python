@@ -40,9 +40,16 @@ class RosbagReader:
         with AnyReader([self.bag_path], default_typestore=self.typestore) as reader:
             # 获取符合 topic 的消息连接
             connections = [x for x in reader.connections if x.topic in self.topics]
+            
+            # 如果没有找到匹配的话题，则提前返回
+            if not connections:
+                print(f"Warning: No connections found for topics: {self.topics}")
+                return
+            
             for connection, timestamp, rawdata in reader.messages(
                 connections=connections
             ):
+
                 msg = reader.deserialize(rawdata, connection.msgtype)
                 handler = self.message_saver.get_handler(msg)
                 handler.save(msg, str(save_dir), connection.topic)
