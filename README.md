@@ -113,7 +113,7 @@ utils_python/
 ```bash
 pytest test/
 ```
-
+python3 script/g_april.py --type apriltag --nx 2 --ny 2 --tsize 0.30 --tspace 0.3
 ---
 
 ## 🤝 贡献指南

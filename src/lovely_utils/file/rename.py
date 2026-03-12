@@ -11,6 +11,59 @@
 
 import shutil
 from pathlib import Path
+from typing import List, Union, Tuple
+
+def batch_rename(
+    old_names: List[Union[str, Path]],
+    new_names: List[Union[str, Path]],
+    allow_overwrite: bool = False,
+) -> List[Tuple[Path, Path]]:
+    """
+    使用 pathlib 批量重命名文件。
+
+    参数:
+        old_names: 旧文件名列表（字符串或 Path 对象）
+        new_names: 新文件名列表（字符串或 Path 对象）
+        allow_overwrite: 是否允许覆盖已存在的目标文件，默认为 False
+
+    返回:
+        List[Tuple[Path, Path]]: 成功重命名的 (旧路径, 新路径) 列表
+
+    抛出:
+        ValueError: 如果两个列表长度不一致
+        FileNotFoundError: 如果某个旧文件不存在
+        FileExistsError: 如果 allow_overwrite=False 且目标文件已存在
+        OSError: 重命名过程中的其他错误（如权限不足、跨设备等）
+    """
+    # 1. 转换为 Path 对象并验证列表长度
+    old_paths = [Path(p) for p in old_names]
+    new_paths = [Path(p) for p in new_names]
+
+    if len(old_paths) != len(new_paths):
+        raise ValueError("旧文件名列表和新文件名列表长度必须相同")
+
+    # 2. 检查所有旧文件是否存在
+    for old in old_paths:
+        if not old.exists():
+            raise FileNotFoundError(f"旧文件不存在: {old}")
+
+    # 3. 检查目标文件是否已存在（如果不允许覆盖）
+    if not allow_overwrite:
+        for new in new_paths:
+            if new.exists():
+                raise FileExistsError(f"新文件已存在，且 allow_overwrite=False: {new}")
+
+    # 4. 执行重命名
+    results = []
+    for old, new in zip(old_paths, new_paths):
+        try:
+            old.rename(new)
+            results.append((old, new))
+        except OSError as e:
+            # 发生错误时，已重命名的文件不会回滚，抛出异常并附带已成功列表
+            raise OSError(f"重命名 {old} -> {new} 失败: {e}") from e
+
+    return results
 
 
 def numeric_sort_and_rename_files(

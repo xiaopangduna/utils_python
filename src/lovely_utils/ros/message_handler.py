@@ -28,7 +28,7 @@ class MessageHandler(ABC):
         timestamp = msg.header.stamp
         time_str = f"{timestamp.sec}_{timestamp.nanosec}"
         msg_type = self._get_message_type(msg)
-        return f"{time_str}_{msg_type}.{self.format}"
+        return f"{msg_type}_{time_str}.{self.format}"
 
     def _generate_file_path(
         self, output_dir: str, topic_name: str, filename: str

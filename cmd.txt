@@ -5,3 +5,10 @@ lovely_utils rosbag save \
 --topics /nuwa_1/rgb0/image \
 --topics /nuwa_1/rgb0/camera_info \
 --save-dir ./tmp
+
+# 
+python script/pcd_to_bin_converter.py -i input.pcd -o output.bin
+
+
+# 3Dlidar 
+lovely_utils rosbag save   --bag-paths /home/ubuntu/Desktop/project/2601_3DLidar_object_detect/datasets/26-01-15-gaoxinhuayuan-lidar/gaoxinhuayuan_26-01-15.bag   --topics /rgbd_front/rgb0/image    --topics /rgbd_back/rgb0/image --topics /rgbd_left/rgb0/image --topics /rgbd_right/rgb0/image --topics /rslidar_points

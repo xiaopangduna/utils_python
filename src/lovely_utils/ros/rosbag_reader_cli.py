@@ -68,7 +68,11 @@ def save(
             reader = RosbagReader(bag_path, topics)
             reader.save_msg(save_dir)
             success_bags.append(bag_path)
-            typer.secho(f"[{i}/{total}] 成功: {bag_name}", fg=typer.colors.GREEN)
+            path_save_msg = save_dir if save_dir else bag_path.parent
+            typer.secho(
+                f"[{i}/{total}] 成功: {bag_name} 保存至:{path_save_msg}",
+                fg=typer.colors.GREEN,
+            )
         except Exception as e:
             failed_bags.append((bag_path, str(e)))
             typer.secho(
