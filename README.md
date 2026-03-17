@@ -62,6 +62,15 @@ lovely_utils rosbag save \
   --save-dir ./output
 ```
 
+#### 生成 标定板 图案
+
+```bash
+lovely_utils camera calib generate_board \
+  --board-type /path/to/your.bag \
+
+  --save-dir ./output
+lovely_utils camera calibration generate-board --output ./board.png
+```
 
 
 ---
@@ -113,7 +122,7 @@ utils_python/
 ```bash
 pytest test/
 ```
-python3 script/g_april.py --type apriltag --nx 2 --ny 2 --tsize 0.30 --tspace 0.3
+python3 script/g_april.py --type apriltag --nx 2 --ny 2 --tsize 0.25 --tspace 0.3
 ---
 
 ## 🤝 贡献指南
@@ -128,6 +137,7 @@ python3 script/g_april.py --type apriltag --nx 2 --ny 2 --tsize 0.30 --tspace 0.
 
 ---
 
+png打印无法控制标定板的物理大小，用pdf更合适
 ## 📄 许可证
 
 本项目基于 [MIT License](./LICENSE) 开源。
