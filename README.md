@@ -65,11 +65,16 @@ lovely_utils rosbag save \
 #### 生成 标定板 图案
 
 ```bash
-lovely_utils camera calib generate_board \
-  --board-type /path/to/your.bag \
-
-  --save-dir ./output
-lovely_utils camera calibration generate-board --output ./board.png
+lovely_utils camera calibration generate-board aruco-gridboard save \
+  --cols 5 \
+  --rows 7 \
+  --dictionary DICT_6X6_250 \
+  --start-id 0 \
+  --marker-length-mm 30 \
+  --marker-sep-mm 6 \
+  --margin-mm 10 \
+  --dpi 127 \
+  --out-dir ./output
 ```
 
 
