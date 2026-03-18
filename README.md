@@ -66,16 +66,42 @@ lovely_utils rosbag save \
 
 ```bash
 lovely_utils camera calibration generate-board aruco-gridboard save \
+  --dictionary DICT_6X6_250 \
   --cols 5 \
   --rows 7 \
-  --dictionary DICT_6X6_250 \
-  --start-id 0 \
   --marker-length-mm 30 \
   --marker-sep-mm 6 \
+  --start-id 0 \
+  --out-dir ./output \
   --margin-mm 10 \
-  --dpi 127 \
+  --dpi 127
+```
+
+```bash
+lovely_utils camera calibration generate-board charuco-board save \
+  --dictionary DICT_6X6_250 \
+  --cols 4 \
+  --rows 3 \
+  --square-length-mm 20 \
+  --marker-length-mm 12 \
+  --out-dir ./output \
+  --dpi 300
+```
+
+```bash
+lovely_utils camera calibration generate-board april-board save \
+  --dictionary t36h11 \
+  --cols 6 \
+  --rows 6 \
+  --marker-length-mm 80 \
+  --marker-sep-mm 24 \
+  --start-id 0 \
+  --rotation 2 \
+  --symm-corners \
   --out-dir ./output
 ```
+
+> 提示：PNG 在不同打印软件中物理尺寸可能不易控制，**推荐使用 PDF 输出**，以获得更稳定的标定板实际尺寸。
 
 
 ---
@@ -127,8 +153,6 @@ utils_python/
 ```bash
 pytest test/
 ```
-python3 script/g_april.py --type apriltag --nx 2 --ny 2 --tsize 0.25 --tspace 0.3
----
 
 ## 🤝 贡献指南
 
