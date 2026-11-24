@@ -103,14 +103,15 @@ lovely_utils camera calibration generate-board april-board save \
 
 #### 从视频抽帧
 
-每隔 `freq` 帧保存一张图片，文件名为 `{prefix}_{帧号}.jpg`。
+`--video` 可重复。传入文件就处理该文件；传入文件夹只扫这一层常见视频后缀，不进入子目录。每个视频的帧写到 `{save-dir}/{视频名}/`，文件名默认是 `{视频名}_{帧号}.jpg`。传入 `--prefix` 时改为 `{prefix}_{帧号}.jpg`。同一批里视频同名时，后一个目录为 `{视频名}_2`、`{视频名}_3`。
 
 ```bash
 lovely_utils video extract-frames \
   --video /path/to/video.mp4 \
+  --video /path/to/another.mp4 \
+  --video /path/to/video_folder \
   --save-dir ./frames \
-  --freq 5 \
-  --prefix frame
+  --freq 5
 ```
 
 ---
