@@ -16,20 +16,18 @@
 
 ## 📦 安装
 
-### 依赖安装
-
-确保你已安装 Python 3.12 或更高版本，然后执行：
+项目使用 [uv](https://docs.astral.sh/uv/) 管理 Python 版本、虚拟环境和依赖。需要 Python 3.12 或更高版本。
 
 ```bash
-pip install -r requirements.txt
+# 安装 uv：https://docs.astral.sh/uv/getting-started/installation/
+uv sync
 ```
 
-### 项目安装
-
-使用 `setuptools` 安装：
+`uv sync` 会按 `uv.lock` 创建 `.venv` 并安装本包及依赖。之后用 `uv run` 运行命令，例如：
 
 ```bash
-python setup.py install
+uv run lovely_utils --help
+uv run pytest test/
 ```
 
 ---
@@ -103,6 +101,17 @@ lovely_utils camera calibration generate-board april-board save \
 
 > 提示：PNG 在不同打印软件中物理尺寸可能不易控制，**推荐使用 PDF 输出**，以获得更稳定的标定板实际尺寸。
 
+#### 从视频抽帧
+
+每隔 `freq` 帧保存一张图片，文件名为 `{prefix}_{帧号}.jpg`。
+
+```bash
+lovely_utils video extract-frames \
+  --video /path/to/video.mp4 \
+  --save-dir ./frames \
+  --freq 5 \
+  --prefix frame
+```
 
 ---
 
@@ -125,7 +134,9 @@ utils_python/
 │       │   ├── message_saver.py   # 消息保存器
 │       │   └── message_handler.py # 消息处理模块
 │       ├── camera_calibration.py  # 相机标定工具
-│       ├── video_processor.py     # 视频处理工具
+│       ├── video/
+│       │   ├── video_processor.py # 视频处理工具
+│       │   └── cli.py             # 视频命令行
 │       └── file_processor.py      # 文件处理工具
 ├── test/
 │   └── ros/
@@ -140,7 +151,7 @@ utils_python/
 │   └── launch.json
 ├── .gitignore
 ├── pyproject.toml
-├── setup.py
+├── uv.lock
 └── requirements.txt
 ```
 
@@ -151,7 +162,7 @@ utils_python/
 使用 `pytest` 进行单元测试：
 
 ```bash
-pytest test/
+uv run pytest test/
 ```
 
 ## 🤝 贡献指南
