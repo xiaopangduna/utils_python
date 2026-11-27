@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """Tools for reading videos and writing image sequences."""
 
-import os
+import re
+import shutil
+import subprocess
+import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -85,6 +88,15 @@ def collect_video_files(inputs: list[Path]) -> VideoInputs:
     return VideoInputs(videos=videos, empty_directories=empty_directories)
 
 
+@dataclass(frozen=True)
+class ExtractResult:
+    """Frames written by one video extraction."""
+
+    saved: int
+    container_frames: int
+    undecodable: int
+
+
 def allocate_output_dir_names(videos: list[Path]) -> list[str]:
     """Return one output directory name per video.
 
@@ -105,6 +117,77 @@ def allocate_output_dir_names(videos: list[Path]) -> list[str]:
     return names
 
 
+def _container_frame_count(path_video: str) -> int:
+    """Return the container's reported frame count, or 0 when it is absent."""
+    completed = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=nb_frames",
+            "-of",
+            "default=nokey=1:nw=1",
+            path_video,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    text = completed.stdout.strip()
+    if not text or text == "N/A":
+        return 0
+    try:
+        count = int(text)
+    except ValueError:
+        return 0
+    return count if count > 0 else 0
+
+
+def _start_reader(pipe, sink: list[str]) -> threading.Thread:
+    def read() -> None:
+        if pipe is None:
+            return
+        for line in pipe:
+            sink.append(line)
+        pipe.close()
+
+    thread = threading.Thread(target=read, daemon=True)
+    thread.start()
+    return thread
+
+
+def _progress_frame(line: str) -> int | None:
+    key, separator, value = line.strip().partition("=")
+    if separator != "=" or key != "frame":
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
+def _frame_indexes(save_dir: Path, prefix: str) -> list[int]:
+    pattern = re.compile(rf"^{re.escape(prefix)}_(\d{{5}})\.jpg$")
+    indexes: list[int] = []
+    for path in save_dir.iterdir():
+        match = pattern.match(path.name)
+        if match:
+            indexes.append(int(match.group(1)))
+    return sorted(indexes)
+
+
+def _renumber_selected_frames(save_dir: Path, prefix: str, freq: int) -> None:
+    """Map ffmpeg's output sequence onto decoded-frame indexes."""
+    for index in reversed(_frame_indexes(save_dir, prefix)):
+        source = save_dir / f"{prefix}_{index:05d}.jpg"
+        target = save_dir / f"{prefix}_{index * freq:05d}.jpg"
+        if source != target:
+            source.rename(target)
+
+
 class VideoProcessor(object):
     @staticmethod
     def extract_frame_from_video(
@@ -113,73 +196,103 @@ class VideoProcessor(object):
         freq: int = 5,
         prefix: str | None = None,
         on_progress: Callable[[int, int, int], None] | None = None,
-    ) -> int:
+    ) -> ExtractResult:
         """Extract frames from a video file at a fixed frame interval.
+
+        Decoding uses ffmpeg so a corrupt packet is skipped and later frames are
+        still written. Frame numbers count successfully decoded frames. With
+        ``freq`` of 1, ``undecodable`` is the container frame count minus the
+        number of frames written.
 
         Args:
             path_video: Path of the video file.
             path_save: Directory where extracted frames are saved.
-            freq: Save one frame every ``freq`` frames. Defaults to 5.
+            freq: Save one frame every ``freq`` decoded frames. Defaults to 5.
             prefix: Filename prefix. Defaults to the video file name without its suffix.
             on_progress: Optional callback ``(frames_read, total_frames, saved)``.
                 ``total_frames`` is 0 when the container does not report a length.
-                Calls are throttled to about 10 Hz, with a final call after the last frame.
+                Calls are throttled to about 10 Hz, with a final call after ffmpeg exits.
 
         Returns:
-            Number of frames written.
+            Saved frame count, container frame count, and undecodable frame count.
 
         Raises:
             ValueError: ``freq`` is less than 1.
-            RuntimeError: The video file cannot be opened or a frame cannot be saved.
+            RuntimeError: ffmpeg is missing, or the video cannot be opened and no frame was written.
         """
         if freq < 1:
             raise ValueError(f"freq must be >= 1, got {freq}")
+        if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
+            raise RuntimeError("ffmpeg and ffprobe must be installed and on PATH")
 
         frame_prefix = prefix or Path(path_video).stem or Path(path_video).name
-        if not os.path.isdir(path_save):
-            os.makedirs(path_save)
+        save_dir = Path(path_save)
+        save_dir.mkdir(parents=True, exist_ok=True)
+        container_frames = _container_frame_count(path_video)
+        pattern = str(save_dir / f"{frame_prefix.replace('%', '%%')}_%05d.jpg")
+        command = [
+            "ffmpeg",
+            "-hide_banner",
+            "-nostats",
+            "-loglevel",
+            "error",
+            "-progress",
+            "pipe:1",
+            "-i",
+            path_video,
+            "-map",
+            "0:v:0",
+            "-fps_mode",
+            "passthrough",
+            "-q:v",
+            "2",
+            "-start_number",
+            "0",
+        ]
+        if freq > 1:
+            command.extend(["-vf", f"select=not(mod(n\\,{freq}))"])
+        command.append(pattern)
 
-        cap = cv2.VideoCapture(path_video)
-        if not cap.isOpened():
-            cap.release()
-            raise RuntimeError(f"Failed to open video: {path_video}")
-
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
-        if total_frames < 0:
-            total_frames = 0
-
-        count = 0
-        saved = 0
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        stderr_lines: list[str] = []
+        stderr_thread = _start_reader(process.stderr, stderr_lines)
         last_emit = 0.0
-
-        def emit(force: bool = False) -> None:
-            nonlocal last_emit
-            if on_progress is None:
-                return
-            now = time.monotonic()
-            if not force and now - last_emit < 0.1:
-                return
-            on_progress(count, total_frames, saved)
-            last_emit = now
-
         try:
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    break
-                if count % freq == 0:
-                    path_img = os.path.join(
-                        path_save, "{}_{:0>5d}.jpg".format(frame_prefix, count)
-                    )
-                    if not cv2.imwrite(path_img, frame):
-                        raise RuntimeError(f"Failed to save image: {path_img}")
-                    saved += 1
-                count += 1
-                emit()
+            assert process.stdout is not None
+            for line in process.stdout:
+                saved_now = _progress_frame(line)
+                if saved_now is None:
+                    continue
+                now = time.monotonic()
+                if on_progress is not None and now - last_emit >= 0.1:
+                    on_progress(saved_now * freq, container_frames, saved_now)
+                    last_emit = now
         finally:
-            emit(force=True)
-            cap.release()
-        return saved
+            return_code = process.wait()
+            stderr_thread.join()
+
+        if freq > 1:
+            _renumber_selected_frames(save_dir, frame_prefix, freq)
+        saved = len(_frame_indexes(save_dir, frame_prefix))
+        if on_progress is not None:
+            on_progress(saved * freq, container_frames, saved)
+        if return_code != 0 and saved == 0:
+            detail = stderr_lines[-1].strip() if stderr_lines else "ffmpeg failed"
+            raise RuntimeError(f"Failed to open video: {path_video}: {detail}")
+
+        undecodable = 0
+        if freq == 1 and container_frames > saved:
+            undecodable = container_frames - saved
+        return ExtractResult(
+            saved=saved,
+            container_frames=container_frames,
+            undecodable=undecodable,
+        )
 
     @staticmethod
     def merge_image_to_video(

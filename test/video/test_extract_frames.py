@@ -37,12 +37,12 @@ def test_extract_frame_from_video_saves_every_nth_frame(tmp_path: Path):
     save_dir = tmp_path / "frames"
     _write_sample_video(video_path, frame_count=10)
 
-    saved = VideoProcessor.extract_frame_from_video(
+    result = VideoProcessor.extract_frame_from_video(
         str(video_path), str(save_dir), freq=2, prefix="frame"
     )
 
     names = sorted(path.name for path in save_dir.glob("frame_*.jpg"))
-    assert saved == 5
+    assert result.saved == 5
     assert names == [
         "frame_00000.jpg",
         "frame_00002.jpg",
@@ -60,7 +60,7 @@ def test_extract_frame_from_video_reports_progress_without_printing_paths(
     _write_sample_video(video_path, frame_count=4)
     events: list[tuple[int, int, int]] = []
 
-    saved = VideoProcessor.extract_frame_from_video(
+    result = VideoProcessor.extract_frame_from_video(
         str(video_path),
         str(save_dir),
         freq=2,
@@ -68,7 +68,7 @@ def test_extract_frame_from_video_reports_progress_without_printing_paths(
     )
 
     captured = capsys.readouterr()
-    assert saved == 2
+    assert result.saved == 2
     assert captured.out == ""
     assert events
     frames_read, total_frames, written = events[-1]
@@ -82,11 +82,12 @@ def test_extract_frame_from_video_defaults_prefix_to_video_stem(tmp_path: Path):
     save_dir = tmp_path / "frames"
     _write_sample_video(video_path, frame_count=2)
 
-    saved = VideoProcessor.extract_frame_from_video(
+    result = VideoProcessor.extract_frame_from_video(
         str(video_path), str(save_dir), freq=1
     )
 
-    assert saved == 2
+    assert result.saved == 2
+    assert result.undecodable == 0
     assert sorted(path.name for path in save_dir.glob("*.jpg")) == [
         "clip_00000.jpg",
         "clip_00001.jpg",

@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 
 from .video_processor import (
+    ExtractResult,
     VideoProcessor,
     allocate_output_dir_names,
     collect_video_files,
@@ -62,7 +63,7 @@ def extract_frames(
     ):
         target = save_dir / dirname
         try:
-            saved = _extract_with_progress(
+            result = _extract_with_progress(
                 video_path, target, freq, prefix, show_progress=sys.stdout.isatty()
             )
         except (RuntimeError, ValueError) as exc:
@@ -73,9 +74,9 @@ def extract_frames(
             )
             continue
         succeeded += 1
-        total_saved += saved
+        total_saved += result.saved
         typer.secho(
-            f"[{index}/{total}] {video_path}: saved {saved} frame(s) to {target}",
+            _saved_message(index, total, video_path, target, result),
             fg=typer.colors.GREEN,
         )
 
@@ -84,6 +85,24 @@ def extract_frames(
     )
     if failed:
         raise typer.Exit(code=1)
+
+
+def _saved_message(
+    index: int,
+    total: int,
+    video_path: Path,
+    target: Path,
+    result: ExtractResult,
+) -> str:
+    message = (
+        f"[{index}/{total}] {video_path}: saved {result.saved} frame(s) to {target}"
+    )
+    if result.undecodable:
+        message += (
+            f" (container {result.container_frames}, "
+            f"{result.undecodable} not decodable)"
+        )
+    return message
 
 
 def _frame_status(frames_read: int, total_frames: int, saved: int) -> str:
@@ -98,7 +117,7 @@ def _extract_with_progress(
     freq: int,
     prefix: str | None,
     show_progress: bool,
-) -> int:
+) -> ExtractResult:
     """Extract frames, refreshing one progress line on an interactive terminal."""
     if not show_progress:
         return VideoProcessor.extract_frame_from_video(
